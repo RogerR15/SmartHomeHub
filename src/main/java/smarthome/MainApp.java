@@ -53,6 +53,15 @@ public class MainApp extends Application {
     public void start(Stage stage) {
         stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
 
+        try {
+            Image icon = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/home-icon.png")));
+
+            // seteaza ca icon a ferestrei (si a Taskbar-ului)
+            stage.getIcons().add(icon);
+        } catch (Exception e) {
+            // Nu am putut incarca iconita
+        }
+
 
         //BACKEND (Subiectul)
         HomeHub hub = new HomeHub();
