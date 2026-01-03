@@ -173,6 +173,11 @@ public class Widgets {
 
     }
 
+/**
+ * O componenta grafica personalizata (Custom Control).
+ * Implementeaza un slider circular folosind matematica vectoriala (Arc Tangenta)
+ * pentru a calcula unghiul mouse-ului fata de centrul cercului.
+ */
 class CircularSlider extends StackPane {
 
     // ===== CONFIG =====

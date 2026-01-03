@@ -1,9 +1,12 @@
 package smarthome;
 
-/*
-    Clasa SUBJECT (SUBIECTUL)
-    Reprezinta "creierul" casei. Retine starea si notifica observastorii
-*/
+/**
+ * Clasa HomeHub - Reprezinta starea centrala a sistemului.
+ * * Rol in Design Pattern: SUBJECT (SUBIECT)
+ * Aceasta clasa detine datele (temperatura, lumini, etc.) si o lista de observatori.
+ * Atunci cand o stare se modifica (ex: setTemperature), metoda notifyObservers()
+ * este apelata pentru a anunta toate widget-urile sa se actualizeze.
+ */
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -47,6 +50,13 @@ public class HomeHub {
         observers.add(o);
     }
 
+
+
+    /**
+     * Parcurge lista de observatori si apeleaza metoda update() a fiecaruia.
+     * @param type Tipul evenimentului (ex: "TEMP", "LIGHT") pentru filtrare eficienta.
+     * @param value Noua valoare a starii.
+     */
     private void notifyObservers(String type, Object value) {
         for (SmartObserver o : observers) {
             o.update(type, value);
@@ -139,6 +149,10 @@ public class HomeHub {
 
 
     // METHODS
+    /**
+     * Realizeaza un apel HTTP asincron (pe un alt thread) catre OpenWeatherMap API.
+     * Este crucial sa rulam pe un thread separat pentru a nu ingheta interfata grafica (JavaFX Application Thread).
+     */
     private void fetchRealWeather(String cityName) {
         //rulam intr-un thread separat pentru a nu bloca interfata
         System.out.println("DEBUG: Pregatesc firul de executie pentru " + cityName);

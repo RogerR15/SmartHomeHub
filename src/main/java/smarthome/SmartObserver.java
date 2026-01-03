@@ -3,10 +3,11 @@ package smarthome;
 //Acesta este contractul care asigura decuplarea intre Hub și Dispozitive.
 
 
-/*
-    Interfata OBSERVER - defineste regula pe care trebuie sa o respecte orice dispozitiv
-                       - asigura decuplarea: Hub-ul nu depinde de clasele concrete
-                      (Lampa, Termostat, etc), ci doar de interfata SmartObserver
+/**
+ * Interfata SmartObserver - Contractul pe care il respecta toti observatorii.
+ * * Rol in Design Pattern: OBSERVER INTERFACE
+ * Aceasta permite decuplarea: HomeHub nu stie ca vorbeste cu un "ThermostatWidget" sau "LampWidget",
+ * ci doar cu un "SmartObserver". Astfel, putem adauga widget-uri noi fara sa modificam codul Hub-ului.
  */
 
 public interface SmartObserver {

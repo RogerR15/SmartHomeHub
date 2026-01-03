@@ -1,3 +1,11 @@
+/**
+ * Clasa principala a aplicatiei.
+ * Extinde Application din JavaFX si configureaza interfata grafica.
+ * * Rol in Design Pattern: CLIENT
+ * Aici se initializeaza Subiectul (HomeHub) si Observatorii (Widgets),
+ * si se realizeaza legatura dintre ei (hub.attach(widget)).
+ */
+
 package smarthome;
 
 import javafx.animation.Animation;
