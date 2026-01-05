@@ -192,11 +192,17 @@ public class HomeHub {
                     String json = content.toString();
                     System.out.println("LOG: JSON Primit: " + json); // Vedem exact ce primim
 
+                    //temperatura
                     double temp = parseTempSmart(json);
+
+                    //conditia
+                    String condition = parseWeatherCondition(json);
 
                     //actualizam starea interna si notificam observatorii
                     this.outsideTemp = temp;
                     notifyObservers("CITY", cityName);
+
+                   notifyObservers("WEATHER_ICON", condition);
 
                     System.out.println("LOG: Temperatura extrasa cu succes: " + temp);
                     System.out.println("Vremea actualizata pentru " + cityName + ": " + temp);
@@ -251,6 +257,36 @@ public class HomeHub {
             System.out.println("LOG: Nu am putut citi numarul din JSON.");
         }
         return 0.0; // Fallback
+    }
+
+
+    private String parseWeatherCondition(String json) {
+        try {
+            // JSON-ul arata cam asa: "weather":[{"id":800,"main":"Clear", ...
+            // Cautam prima aparitie a lui "main":"
+            // ATENTIE: Exista un "main" si la temperatura. Cel de vreme e primul in lista de obicei,
+            // dar ca sa fim siguri, cautam intai "weather"
+
+            int weatherIndex = json.indexOf("\"weather\"");
+            if (weatherIndex != -1) {
+                String subJson = json.substring(weatherIndex); // Taiem tot ce e inainte de weather
+
+                String searchKey = "\"main\":\"";
+                int mainIndex = subJson.indexOf(searchKey);
+
+                if (mainIndex != -1) {
+                    int start = mainIndex + searchKey.length();
+                    int end = subJson.indexOf("\"", start);
+
+                    if (end != -1) {
+                        return subJson.substring(start, end); // Returneaza "Clouds", "Clear", "Rain" etc.
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Eroare parsare conditie meteo: " + e.getMessage());
+        }
+        return "Clear"; // Default daca nu gasim
     }
 
 }

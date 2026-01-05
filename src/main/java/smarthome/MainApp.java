@@ -272,7 +272,7 @@ public class MainApp extends Application {
         BorderPane.setAlignment(footer, Pos.CENTER);
         dashboardRoot.setBottom(footer);
 
-        //update greeting cand se schimba numele utilizatorului
+        // Notificari din backend pentru actualizari UI generale
         hub.attach((type, val) -> {
             if ("USER".equals(type)) {
                 Platform.runLater(updateGreeting);
@@ -290,6 +290,12 @@ public class MainApp extends Application {
             if ("PROFILE".equals(type)) {
                 Platform.runLater(() -> loadProfileImage((String) val));
             }
+
+            if ("WEATHER_ICON".equals(type)) {
+                String condition = (String) val;
+                Platform.runLater(() -> updateWeatherIcon(weatherIconView, condition));
+            }
+
         });
 
         // crearea bara titlu custom
@@ -309,6 +315,53 @@ public class MainApp extends Application {
         stage.show();
         hub.setCity(hub.getCity());
 
+    }
+
+    private void updateWeatherIcon(ImageView iconView, String condition) {
+        String path = "/resources/sun.png"; // Default
+
+        // Verificam ce ne-a dat API-ul si alegem poza
+        // Valorile posibile de la OpenWeatherMap: Thunderstorm, Drizzle, Rain, Snow, Clear, Clouds
+        switch (condition) {
+            case "Clouds":
+            case "Mist":
+            case "Fog":
+            case "Haze":
+                path = "/resources/cloud.png";
+                break;
+            case "Rain":
+            case "Drizzle":
+                path = "/resources/rain.png";
+                break;
+            case "Snow":
+                path = "/resources/snow.png";
+                break;
+            case "Thunderstorm":
+                path = "/resources/storm.png";
+                break;
+            case "Clear":
+            default:
+                path = "/resources/sun.png";
+                break;
+        }
+
+        try {
+            iconView.setImage(new Image(Objects.requireNonNull(getClass().getResourceAsStream(path))));
+
+            // Efect vizual (Glow) diferit in functie de vreme
+            if (path.contains("sun")) {
+                iconView.setEffect(new DropShadow(15, Color.ORANGE));
+            } else if (path.contains("cloud")) {
+                iconView.setEffect(new DropShadow(10, Color.GRAY));
+            } else if (path.contains("rain") || path.contains("storm")) {
+                iconView.setEffect(new DropShadow(10, Color.BLUE));
+            } else {
+                iconView.setEffect(null);
+            }
+
+        } catch (Exception e) {
+            System.out.println("Nu am gasit iconita pentru vreme: " + path);
+        }
     }
 
     private void loadProfileImage(String path) {
