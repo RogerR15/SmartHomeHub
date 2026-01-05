@@ -280,7 +280,7 @@ public class MainApp extends Application {
             if ("CITY".equals(type)) {
                 Platform.runLater(() -> {
                     // Actualizam textul cand vine temperatura de pe net
-                    String t = String.format("%.1f", hub.getOutsideTemp()); // Fara zecimale (stil Apple)
+                    String t = String.format("%.1f", hub.getOutsideTemp());
                     tempLabel.setText(t + "°");
 
                     cityLabel.setText(hub.getCity().toUpperCase());
