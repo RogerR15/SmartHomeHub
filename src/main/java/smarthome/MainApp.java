@@ -250,6 +250,7 @@ public class MainApp extends Application {
         hub.attach(securityWidget);
         hub.attach(thermostatWidget);
         hub.attach(logWidget);
+        hub.attach(music);
 
         // Construim Coloane Verticale
         VBox col1 = new VBox(25, lampWidget, securityWidget);

@@ -10,6 +10,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
@@ -19,7 +20,8 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.io.InputStream;
 
-import java.awt.*;
+import java.util.*;
+import java.util.ArrayList;
 
 import javafx.animation.ScaleTransition;
 import javafx.scene.Cursor;
@@ -616,14 +618,216 @@ class CircularSlider extends StackPane {
 
     // 5. MUZICA
     class MusicWidget extends BaseWidget {
+        private ImageView coverArt;
+        private Label songTitle;
+        private Label artistLabel;
 
-        public MusicWidget(HomeHub hub) {
+        private Button playBtn;
+        private ImageView playBtnIconView;
+        private ProgressBar progressBar;
+
+        private Image imgPlay, imgPause;
+
+
+        // PLAYER-UL JAVAFX REAl
+        private MediaPlayer mediaPlayer;
+
+        private List<Song> playlist = new ArrayList<>();
+        private int currentIndex = 0;
+
+        private record Song(String title, String artist, String colorHex, String fileName) {}
+
+        public MusicWidget(HomeHub hub){
             super(hub);
-            getChildren().add(createHeader("Music", new Label("")));
+
+            // INCARCARE RESURSE
+            try{
+                imgPlay = new Image(getClass().getResourceAsStream("/resources/play.png"));
+                imgPause = new Image(getClass().getResourceAsStream("/resources/pause.png"));
+            } catch(Exception e){
+
+            }
+
+            // DEFINIRE PLAYLIST (Adaugare muzica)
+            playlist.add(new Song("Chill Vibes", "Pixabay", "#FF2D55", "song1.mp3"));
+            playlist.add(new Song("Cyberpunk", "Synthwave", "#BF5AF2", "song2.mp3"));
+            playlist.add(new Song("Piano Mood", "Classical", "#0A84FF",  "song3.mp3"));
+
+            // Header
+            HBox header = createHeader("Spotify Player", new Label(""));
+            header.setPadding(new Insets(0, 0, 5, 0));
+            getChildren().add(header);
+
+            // UI SETUP
+            coverArt = new ImageView();
+            StackPane coverContainer = new StackPane();
+            coverContainer.setPrefSize(70, 70);
+            coverContainer.setMaxSize(70, 70);
+            updateCoverStyle(playlist.get(0).colorHex, coverContainer);
+
+            Label noteIcon = new Label("♫");
+            noteIcon.setTextFill(Color.WHITE);
+            noteIcon.setFont(Font.font("Segoe UI", FontWeight.BOLD, 30));
+            coverContainer.getChildren().add(noteIcon);
+
+            songTitle = new Label(playlist.get(0).title);
+            songTitle.setTextFill(Color.WHITE);
+            songTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 15));
+
+
+            artistLabel = new Label(playlist.get(0).artist);
+            artistLabel.setTextFill(Color.web("b3b3b3"));
+            artistLabel.setFont(Font.font("Segoe UI", 12));
+
+            VBox textBox = new VBox(4, songTitle, artistLabel);
+            textBox.setAlignment(Pos.CENTER_LEFT);
+            HBox contentBox = new HBox(15, coverContainer, textBox);
+            contentBox.setAlignment(Pos.CENTER_LEFT);
+            getChildren().add(contentBox);
+
+            progressBar = new ProgressBar(0);
+            progressBar.setMaxWidth(Double.MAX_VALUE);
+            progressBar.setPrefHeight(6);
+            progressBar.setStyle("-fx-accent: #1DB954; -fx-control-inner-background: #404040; -fx-text-box-border: transparent;");
+
+            VBox progressBox = new VBox(progressBar);
+            progressBox.setPadding(new Insets(10, 0, 5, 0));
+            getChildren().add(progressBox);
+
+            // Controale
+            Button prevBtn = createIconMediaBtn("/resources/prev.png");
+            Button nextBtn = createIconMediaBtn("/resources/next.png");
+
+            playBtn = new Button();
+            playBtn.setPrefSize(50, 50);
+            playBtn.setStyle("-fx-background-color: #1DB954; -fx-background-radius: 100; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(29, 185, 84, 0.4), 10, 0, 0, 0);");
+
+            playBtnIconView = new ImageView();
+            playBtnIconView.setFitWidth(20);
+            playBtnIconView.setFitHeight(20);
+            if(imgPlay != null){
+                playBtnIconView.setImage(imgPlay);
+                playBtn.setGraphic(playBtnIconView);
+            } else{
+                playBtn.setText("▶");
+            }
+
+            // ACTIUNI
+            loadSong(0);
+
+            playBtn.setOnAction(e -> {
+                boolean isPlaying =
+                        mediaPlayer != null &&
+                                mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING;
+
+                hub.setMusicPlaying(!isPlaying);
+            });
+
+            prevBtn.setOnAction(e -> changeTrack(-1));
+            nextBtn.setOnAction(e -> changeTrack(1));
+
+            HBox controls = new HBox(25, playBtn, prevBtn, nextBtn);
+            controls.setAlignment(Pos.CENTER);
+            controls.setPadding(new  Insets(5, 0, 0, 0));
+            getChildren().add(controls);
+        }
+
+        // LOGICA AUDIO
+        private void loadSong(int index){
+            // 1. Oprim player-ul vechi daca exista
+            if(mediaPlayer != null){
+                mediaPlayer.stop();
+                mediaPlayer.dispose(); // Eliberam resursele
+            }
+
+            Song song = playlist.get(index);
+
+            try {
+                String path = getClass().getResource("/resources/" + song.fileName).toExternalForm();
+                javafx.scene.media.Media media = new javafx.scene.media.Media(path);
+
+                mediaPlayer = new javafx.scene.media.MediaPlayer(media);
+
+                mediaPlayer.setVolume(0.5);
+
+                mediaPlayer.setOnEndOfMedia(() -> changeTrack(1));
+
+                mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
+                    if(mediaPlayer.getTotalDuration() != null){
+                        double progress = newTime.toMillis() / mediaPlayer.getTotalDuration().toMillis();
+                        progressBar.setProgress(progress);
+                    }
+                });
+            } catch (Exception e) {
+                System.out.println("Nu s-a putut incarca fisierul audio " + song.fileName);
+                e.printStackTrace();
+            }
+        }
+
+        private void changeTrack(int direction) {
+            currentIndex = (currentIndex + direction + playlist.size()) % playlist.size();
+            Song nextSong = playlist.get(currentIndex);
+
+            // ACTUALIZAM UI
+            songTitle.setText(nextSong.title);
+            artistLabel.setText(nextSong.artist);
+
+            StackPane cover = (StackPane) ((HBox)getChildren().get(1)).getChildren().get(0);
+            updateCoverStyle(nextSong.colorHex, cover);
+
+            // Incarcam melodia noua
+            boolean wasPlaying = (mediaPlayer.getStatus() == javafx.scene.media.MediaPlayer.Status.PLAYING);
+            loadSong(currentIndex);
+
+            // Daca melodia anterioara canta, o pornim si pe asta automat
+            if(wasPlaying){
+                mediaPlayer.play();
+            } else {
+                // Resetam bara daca suntem pe pauza
+                progressBar.setProgress(0);
+            }
+        }
+
+        private void updateCoverStyle(String color, StackPane cover) {
+            cover.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 10, 0, 0, 5);");
+        }
+
+        // Helper butoane (acelasi ca inainte)
+
+        private Button createIconMediaBtn(String iconPath) {
+            Button b = new  Button();
+            b.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
+            try {
+                ImageView iv = new ImageView(new Image(getClass().getResourceAsStream(iconPath)));
+                iv.setFitWidth(24);
+                iv.setFitHeight(24);
+                b.setGraphic(iv);
+            } catch (Exception e) {b.setText("?"); b.setTextFill(Color.WHITE);}
+            b.setOnMouseEntered(e -> b.setOpacity(0.7));
+            b.setOnMouseExited(e -> b.setOpacity(1));
+            return b;
         }
 
         @Override
-        public void update(String type, Object value) {}
+        public void update(String type, Object value) {
+            if (!"MUSIC".equals(type)) return;
+
+            boolean shouldPlay = (boolean) value;
+
+            Platform.runLater(() -> {
+                if (mediaPlayer == null) return;
+
+                if (shouldPlay) {
+                    mediaPlayer.play();
+                    if (imgPause != null)
+                        playBtnIconView.setImage(imgPause);
+                } else {
+                    mediaPlayer.pause();
+                    if (imgPlay != null)
+                        playBtnIconView.setImage(imgPlay);
+                }
+            });
+        }
     }
 
 
