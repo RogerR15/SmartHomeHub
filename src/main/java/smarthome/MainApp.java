@@ -319,7 +319,7 @@ public class MainApp extends Application {
     }
 
     private void updateWeatherIcon(ImageView iconView, String condition) {
-        String path = "/resources/sun.png"; // Default
+        String path; // Default
 
         // Verificam ce ne-a dat API-ul si alegem poza
         // Valorile posibile de la OpenWeatherMap: Thunderstorm, Drizzle, Rain, Snow, Clear, Clouds

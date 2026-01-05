@@ -1,0 +1,48 @@
+/* --- 1. Stil pentru Slider-ul de Volum (Rotund, Spotify Style) --- */
+.spotify-slider .track {
+    -fx-background-color: #535353; /* Gri inchis */
+    -fx-pref-height: 4px;          /* Foarte subtire */
+    -fx-background-radius: 5px;
+}
+
+.spotify-slider .thumb {
+    -fx-background-color: white;   /* Buton alb */
+    -fx-pref-width: 12px;          /* Mic si rotund */
+    -fx-pref-height: 12px;
+    -fx-background-radius: 50%;    /* Cerc perfect */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 3, 0, 0, 1);
+}
+
+/* Efect Hover Volum */
+.spotify-slider:hover .thumb {
+    -fx-background-color: #1DB954; /* Se face verde */
+    -fx-scale-x: 1.2;
+    -fx-scale-y: 1.2;
+}
+
+.spotify-slider:hover .track {
+    -fx-background-color: #b3b3b3;
+}
+
+/* --- 2. Stil pentru Bara de Progres Muzica (Capsula) --- */
+
+/* Scoatem padding-ul default */
+.spotify-progress-bar {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+/* Sina (Partea gri, neascultata) */
+.spotify-progress-bar .track {
+    -fx-background-color: #535353; /* Gri inchis */
+    -fx-background-radius: 10px;   /* Colțuri rotunde */
+    -fx-background-insets: 0;
+}
+
+/* Bara (Partea verde, progresul) */
+.spotify-progress-bar .bar {
+    -fx-background-color: #1DB954; /* Verde Spotify */
+    -fx-background-radius: 10px;   /* Colțuri rotunde */
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
