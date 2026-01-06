@@ -80,6 +80,9 @@ public class HomeHub {
     public String getProfileImagePath() {
         return profileImagePath;
     }
+    public int getBlindsLevel() {
+        return blindsLevel;
+    }
 
 
 

@@ -2,6 +2,7 @@ package smarthome;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.Button;
@@ -607,13 +608,121 @@ class ThermostatWidget extends BaseWidget {
 // 4. JALUZELE
 class BlindsWidget extends BaseWidget {
 
+    private Slider blindSlider;
+    private Label statusLabel;
+    private ImageView windowIcon;
+    private boolean updateingFormHub = false;
+
+    private Image imgClosed;
+    private Image imgOpen;
+
     public BlindsWidget(HomeHub hub) {
         super(hub);
-        getChildren().add(createHeader("Blinds", new Label("")));
+
+        // Load images
+        try {
+            imgClosed = new Image(getClass().getResourceAsStream("/resources/window_closed.png"));
+            imgOpen   = new Image(getClass().getResourceAsStream("/resources/window_open.png"));
+        } catch (Exception e) {
+            System.out.println("Nu s-au gasit imaginile de fereastra");
+        }
+
+        // Header
+        getChildren().add(createHeader("Smart Blinds", new Label("")));
+
+        // Window icon
+        windowIcon = new ImageView();
+        windowIcon.setFitWidth(70);
+        windowIcon.setFitHeight(70);
+        windowIcon.setPreserveRatio(true);
+        if (imgClosed != null) {
+            windowIcon.setImage(imgClosed);
+        }
+
+        // Status label
+        statusLabel = new Label("Closed");
+        statusLabel.setTextFill(Color.GRAY);
+        statusLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+
+        VBox infoBox = new VBox(10, windowIcon, statusLabel);
+        infoBox.setAlignment(Pos.CENTER);
+
+        // Slider
+        blindSlider = new Slider(0, 100, 0);
+        blindSlider.setOrientation(Orientation.VERTICAL);
+        blindSlider.setPrefHeight(130);
+        blindSlider.setStyle(
+                "-fx-control-inner-background: #333;" +
+                        "-fx-accent: #0A84FF;"
+        );
+
+        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if(updateingFormHub) return;
+            int level = newVal.intValue();
+            updateLocalUI(level);
+
+        });
+
+        blindSlider.setOnMouseReleased(event -> {
+            int level = (int) blindSlider.getValue();
+            hub.setBlindsLevel(level);
+        });
+
+        blindSlider.setOnMouseClicked(event -> {
+            int level = (int) blindSlider.getValue();
+            hub.setBlindsLevel(level);
+        });
+
+        HBox content = new HBox(30, infoBox, blindSlider);
+        content.setAlignment(Pos.CENTER);
+        content.setPadding(new Insets(10, 0, 0, 0));
+
+        getChildren().add(content);
+
+        // Initial state
+        updateLocalUI(hub.getBlindsLevel());
+        blindSlider.setValue(hub.getBlindsLevel());
+    }
+
+    private void updateLocalUI(int level) {
+        if (level == 0) {
+            statusLabel.setText("Closed");
+            statusLabel.setTextFill(Color.GRAY);
+
+            if (imgClosed != null) {
+                windowIcon.setImage(imgClosed);
+                windowIcon.setEffect(null);
+            }
+        } else {
+            statusLabel.setText("Open " + level + "%");
+            statusLabel.setTextFill(Color.WHITE);
+
+            if (imgOpen != null) {
+                windowIcon.setImage(imgOpen);
+                double glowIntensity = level / 100.0;
+
+                DropShadow glow = new DropShadow(
+                        20 * glowIntensity,
+                        Color.web("#0A84FF", 0.7)
+                );
+                windowIcon.setEffect(glow);
+            }
+        }
     }
 
     @Override
-    public void update(String type, Object value) {}
+    public void update(String type, Object value) {
+        if ("BLINDS".equals(type)) {
+            int level = (int) value;
+
+            Platform.runLater(() -> {
+                updateingFormHub = true;
+                blindSlider.setValue(level);
+                updateLocalUI(level);
+                updateingFormHub = false;
+            });
+        }
+    }
 }
 
 // 5. MUZICA
@@ -641,7 +750,7 @@ class MusicWidget extends BaseWidget {
     public MusicWidget(HomeHub hub) {
         super(hub);
 
-        // --- 1. INCARCARE CSS (NOU) ---
+        // INCARCARE CSS
         try {
             // Incarcam fisierul style.css creat in resources
             String cssPath = getClass().getResource("/style.css").toExternalForm();
