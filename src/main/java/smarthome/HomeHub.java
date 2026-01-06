@@ -1,6 +1,6 @@
 package smarthome;
 
-/**
+/*
  * Clasa HomeHub - Reprezinta starea centrala a sistemului.
  * * Rol in Design Pattern: SUBJECT (SUBIECT)
  * Aceasta clasa detine datele (temperatura, lumini, etc.) si o lista de observatori.
@@ -28,18 +28,14 @@ public class HomeHub {
     private String profileImagePath = "/resources/yasmina.png";
     private double temperature = 21.0;
     private boolean heatingOn = true;
-    private boolean lightsOn = false;
-    private boolean isLocked = true;
     private int blindsLevel = 0;
-    private boolean musicPlaying = false;
-    private boolean acPower = false;
     private double acTemp = 22.0;
     private int fanSpeed = 1;
     private String city = "Iasi"; // Orasul default
     private double outsideTemp = 0.0;
 
     // Lista de abonati (Widget-uri)
-    private List<SmartObserver> observers = new ArrayList<>();
+    private final List<SmartObserver> observers = new ArrayList<>();
 
     // IMPLEMENTARE OBSERVER PATTERN
     public void attach(SmartObserver o) {
@@ -55,14 +51,10 @@ public class HomeHub {
     }
 
     // GETTERS
-    public double getTemperature() {
-        return temperature;
-    }
-    public String getUserName() { return userName; }
-    public double getAcTemperature() {
-        return acTemp;
-    }
+    public double getTemperature() {return temperature;}
     public int getFanSpeed() { return fanSpeed; }
+    public String getUserName() { return userName; }
+    public double getAcTemperature() { return acTemp; }
     public String getCity() { return city; }
     public double getOutsideTemp() { return outsideTemp; }
     public boolean isHeatingOn() {
@@ -85,12 +77,10 @@ public class HomeHub {
     }
 
     public void toggleLights(boolean status) {
-        this.lightsOn = status;
         notifyObservers("LIGHT", status);
     }
 
     public void setDoorLocked(boolean locked) {
-        this.isLocked = locked;
         notifyObservers("LOCKED", locked);
     }
 
@@ -106,7 +96,6 @@ public class HomeHub {
     }
 
     public void setAcPower(boolean on) {
-        this.acPower = on;
         notifyObservers("AC_POWER", on);
     }
 
@@ -126,7 +115,6 @@ public class HomeHub {
     }
 
     public void setMusicPlaying(boolean playing) {
-        this.musicPlaying = playing;
         notifyObservers("MUSIC", playing);
     }
 

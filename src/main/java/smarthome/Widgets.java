@@ -154,9 +154,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
         );
 
         // Listener care coloreaza bara din stanga (efectul de fill)
-        slider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            updateSliderFill(slider, activeColor);
-        });
+        slider.valueProperty().addListener((obs, oldVal, newVal) -> updateSliderFill(slider, activeColor));
 
         // rulat putin mai tarziu ca sa gaseasca .track in scena
         Platform.runLater(() -> updateSliderFill(slider, activeColor));
@@ -205,8 +203,6 @@ class CircularSlider extends StackPane {
     private final double max;
     private double value;
 
-    // UI
-    private final Circle track;
     private final Arc progress;
     private final Circle thumb;
     private final Label valueLabel;
@@ -232,7 +228,8 @@ class CircularSlider extends StackPane {
         double cy = SIZE / 2;
 
         // TRACK (Cerc Gri) - Coordonate fixe
-        track = new Circle(cx, cy, RADIUS);
+        // UI
+        Circle track = new Circle(cx, cy, RADIUS);
         track.setFill(null);
         track.setStroke(Color.web("#2c2c2e"));
         track.setStrokeWidth(STROKE);
@@ -497,11 +494,11 @@ class SecurityWidget extends BaseWidget {
 // 3. TERMOSTAT
 class ThermostatWidget extends BaseWidget {
     // UI Elements
-    private ImageView icon;
+    private final ImageView icon;
     private Image imgCold, imgNormal, imgHot;
-    private Slider tempSlider;
-    private Label tempLabel;
-    private ToggleButton powerBtn;
+    private final Slider tempSlider;
+    private final Label tempLabel;
+    private final ToggleButton powerBtn;
 
     public ThermostatWidget(HomeHub hub) {
         super(hub);
@@ -624,10 +621,10 @@ class ThermostatWidget extends BaseWidget {
 class BlindsWidget extends BaseWidget {
 
     // UI Elements
-    private Slider blindSlider;
-    private Label statusLabel;
-    private ImageView windowIcon;
-    private boolean updateingFormHub = false;
+    private final Slider blindSlider;
+    private final Label statusLabel;
+    private final ImageView windowIcon;
+    private final boolean updateingFormHub = false;
 
     private Image imgClosed;
     private Image imgOpen;
@@ -645,8 +642,8 @@ class BlindsWidget extends BaseWidget {
 
         // Load images
         try {
-            imgClosed = new Image(getClass().getResourceAsStream("/resources/window_closed.png"));
-            imgOpen   = new Image(getClass().getResourceAsStream("/resources/window_open.png"));
+            imgClosed = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/window_closed.png")));
+            imgOpen   = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/window_open.png")));
         } catch (Exception e) {
             System.out.println("Nu s-au gasit imaginile de fereastra");
         }
@@ -704,12 +701,7 @@ class BlindsWidget extends BaseWidget {
         sliderContainer.setMaxHeight(sliderHeight);
         sliderContainer.setPrefWidth(40);
 
-        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            updateLocalUI(newVal.intValue());
-            if (!updateingFormHub && !blindSlider.isValueChanging()) {
-                // Trimite update la Hub doar daca nu vine de la Hub
-            }
-        });
+        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> updateLocalUI(newVal.intValue()));
 
         // Trimite update la Hub cand eliberezi mouse-ul
         blindSlider.setOnMouseReleased(event -> {
@@ -765,9 +757,7 @@ class BlindsWidget extends BaseWidget {
         if ("BLINDS".equals(type)) {
             int level = (int) value;
 
-            Platform.runLater(() -> {
-                blindSlider.setValue(level);
-            });
+            Platform.runLater(() -> blindSlider.setValue(level));
         }
     }
 }
@@ -775,24 +765,23 @@ class BlindsWidget extends BaseWidget {
 // 5. MUZICA
 class MusicWidget extends BaseWidget {
     // UI Elements
-    private Label songTitle;
-    private Label artistLabel;
-    private Label lblCurrentTime;
-    private Label lblTotalTime;
-    private Button playBtn;
-    private ImageView playBtnIconView;
-    private ProgressBar progressBar;
-    private Slider volumeSlider;
+    private final Label songTitle;
+    private final Label artistLabel;
+    private final Label lblCurrentTime;
+    private final Label lblTotalTime;
+    private final ImageView playBtnIconView;
+    private final ProgressBar progressBar;
+    private final Slider volumeSlider;
 
     // UI Element pentru coperta
-    private StackPane coverContainer;
+    private final StackPane coverContainer;
 
     // Resurse
     private Image imgPlay, imgPause;
     private MediaPlayer mediaPlayer;
 
     // Playlist
-    private List<Song> playlist = new ArrayList<>();
+    private final List<Song> playlist = new ArrayList<>();
     private int currentIndex = 0;
 
     // Structura pentru melodia din playlist
@@ -804,7 +793,7 @@ class MusicWidget extends BaseWidget {
         // Incarcare stil CSS
         try {
             // Incarcam fisierul style.css creat in resources
-            String cssPath = getClass().getResource("/style.css").toExternalForm();
+            String cssPath = Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm();
             this.getStylesheets().add(cssPath);
         } catch (Exception e) {
             System.out.println("Nu s-a gasit style.css.");
@@ -812,8 +801,8 @@ class MusicWidget extends BaseWidget {
 
         // Resurse
         try {
-            imgPlay = new Image(getClass().getResourceAsStream("/resources/play.png"));
-            imgPause = new Image(getClass().getResourceAsStream("/resources/pause.png"));
+            imgPlay = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/play.png")));
+            imgPause = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/pause.png")));
         } catch (Exception e) { /* Ignoram */ }
 
         // Playlist
@@ -829,18 +818,18 @@ class MusicWidget extends BaseWidget {
         coverContainer = new StackPane();
         coverContainer.setPrefSize(70, 70);
         coverContainer.setMaxSize(70, 70);
-        updateCoverStyle(playlist.get(0).colorHex, coverContainer);
+        updateCoverStyle(playlist.getFirst().colorHex, coverContainer);
 
         Label noteIcon = new Label("♫");
         noteIcon.setTextFill(Color.WHITE);
         noteIcon.setFont(Font.font("Segoe UI", FontWeight.BOLD, 25));
         coverContainer.getChildren().add(noteIcon);
 
-        songTitle = new Label(playlist.get(0).title);
+        songTitle = new Label(playlist.getFirst().title);
         songTitle.setTextFill(Color.WHITE);
         songTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
 
-        artistLabel = new Label(playlist.get(0).artist);
+        artistLabel = new Label(playlist.getFirst().artist);
         artistLabel.setTextFill(Color.web("#b3b3b3"));
         artistLabel.setFont(Font.font("Segoe UI", 11));
 
@@ -884,7 +873,7 @@ class MusicWidget extends BaseWidget {
         Button prevBtn = createIconMediaBtn("/resources/prev.png");
         Button nextBtn = createIconMediaBtn("/resources/next.png");
 
-        playBtn = new Button();
+        Button playBtn = new Button();
         playBtn.setPrefSize(32, 32);
         playBtn.setStyle("-fx-background-color: #1DB954; -fx-background-radius: 50; -fx-cursor: hand;");
 
@@ -956,9 +945,7 @@ class MusicWidget extends BaseWidget {
             mediaPlayer.setOnEndOfMedia(() -> changeTrack(1)); // trece la melodia urmatoare
 
             // Actualizam durata totala cand melodia e gata
-            mediaPlayer.setOnReady(() -> {
-                lblTotalTime.setText(formatTime(media.getDuration()));
-            });
+            mediaPlayer.setOnReady(() -> lblTotalTime.setText(formatTime(media.getDuration())));
 
             // Actualizam progresul melodia in timp real
             mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
@@ -1008,7 +995,7 @@ class MusicWidget extends BaseWidget {
         Button b = new Button();
         b.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
         try {
-            ImageView iv = new ImageView(new Image(getClass().getResourceAsStream(iconPath)));
+            ImageView iv = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath))));
             iv.setFitWidth(20); iv.setFitHeight(20);
             b.setGraphic(iv);
         } catch(Exception e) { b.setText("?"); b.setTextFill(Color.WHITE); }
@@ -1038,14 +1025,16 @@ class MusicWidget extends BaseWidget {
 // 6. AER CONDITIONAT
 class AirConditionerWidget extends BaseWidget {
     // UI Elements
-    private ToggleButton powerBtn;
-    private Label statusLabel;
-    private CircularSlider tempKnob;
-    private ImageView icon;
+    private final ToggleButton powerBtn;
+    private final Label statusLabel;
+    private final CircularSlider tempKnob;
+    private final ImageView icon;
 
     // Fan speed buttons
-    private Button btnLow, btnMed, btnHigh;
-    private HBox fanContainer;
+    private final Button btnLow;
+    private final Button btnMed;
+    private final Button btnHigh;
+    private final HBox fanContainer;
 
     public AirConditionerWidget(HomeHub hub) {
         super(hub);
@@ -1064,7 +1053,7 @@ class AirConditionerWidget extends BaseWidget {
         icon.setOpacity(0.3);
 
 
-        if (icon.getImage() == null) {}
+//        if (icon.getImage() == null) {}
         VBox iconContainer = new VBox(icon);
         iconContainer.setAlignment(Pos.CENTER);
         iconContainer.setPadding(new Insets(5, 0, 5, 0)); // Spatiu sus/jos
@@ -1074,9 +1063,7 @@ class AirConditionerWidget extends BaseWidget {
         tempKnob = new CircularSlider(16, 30, 22);
 
         // Cand invartim de el, anuntam Hub-ul
-        tempKnob.setOnValueChanged(val -> {
-            hub.setAcTemperature(val);
-        });
+        tempKnob.setOnValueChanged(hub::setAcTemperature);
 
         // Initial dezactivat
         tempKnob.setDisable(true);
