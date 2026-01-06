@@ -251,6 +251,7 @@ public class MainApp extends Application {
         hub.attach(thermostatWidget);
         hub.attach(logWidget);
         hub.attach(music);
+        hub.attach(blinds);
 
         // Construim Coloane Verticale
         VBox col1 = new VBox(25, lampWidget, securityWidget);
@@ -699,7 +700,7 @@ public class MainApp extends Application {
             hub.setDoorLocked(true);
             hub.toggleLights(false);
             hub.setMusicPlaying(false);
-            hub.setBlindsLevel(0);
+            hub.setBlindsLevel(35);
             hub.setAcPower(false);
             hub.setHeatingPower(true);
             hub.setTemperature(16.0);

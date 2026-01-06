@@ -46,3 +46,22 @@
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
+
+.slider-blinds {
+    -fx-padding: 0 10 0 10;
+}
+
+/* IMPORTANT: Track-ul trebuie sa fie TRANSPARENT ca sa se vada bara albastra din spate */
+.slider-blinds .track {
+    -fx-pref-width: 24px;
+    -fx-background-radius: 12px;
+    -fx-background-color: transparent; /* AICI ERA PROBLEMA */
+}
+
+.slider-blinds .thumb {
+    -fx-pref-width: 24px;
+    -fx-pref-height: 24px;
+    -fx-background-color: white;
+    -fx-background-radius: 50%;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 6, 0, 0, 2);
+}

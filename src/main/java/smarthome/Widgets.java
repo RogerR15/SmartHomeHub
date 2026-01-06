@@ -13,10 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.ArcType;
-import javafx.scene.shape.Circle;
-import javafx.scene.shape.StrokeLineCap;
+import javafx.scene.shape.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import java.io.InputStream;
@@ -619,6 +616,14 @@ class BlindsWidget extends BaseWidget {
     public BlindsWidget(HomeHub hub) {
         super(hub);
 
+        try {
+            // Incarcam fisierul style.css creat in resources
+            String cssPath = getClass().getResource("/style.css").toExternalForm();
+            this.getStylesheets().add(cssPath);
+        } catch (Exception e) {
+            System.out.println("Atentie: Nu s-a gasit style.css. Creeaza-l in src/main/resources/");
+        }
+
         // Load images
         try {
             imgClosed = new Image(getClass().getResourceAsStream("/resources/window_closed.png"));
@@ -648,19 +653,37 @@ class BlindsWidget extends BaseWidget {
         infoBox.setAlignment(Pos.CENTER);
 
         // Slider
+        double sliderHeight = 130;
+        Rectangle trackBg = new Rectangle(12, sliderHeight);
+        trackBg.setArcWidth(12);
+        trackBg.setArcHeight(12);
+        trackBg.setFill(Color.web("#333333"));
+
+        Rectangle trackFill = new Rectangle(12, 0); // Porneste de la 0 inaltime
+        trackFill.setArcWidth(12);
+        trackFill.setArcHeight(12);
+        trackFill.setFill(Color.web("#0A84FF"));
+        StackPane.setAlignment(trackFill, Pos.BOTTOM_CENTER);
+
         blindSlider = new Slider(0, 100, 0);
         blindSlider.setOrientation(Orientation.VERTICAL);
-        blindSlider.setPrefHeight(130);
-        blindSlider.setStyle(
-                "-fx-control-inner-background: #333;" +
-                        "-fx-accent: #0A84FF;"
+        blindSlider.setPrefHeight(sliderHeight);
+        blindSlider.setMaxHeight(sliderHeight);
+        blindSlider.getStyleClass().add("slider-blinds");
+
+        trackFill.heightProperty().bind(
+                blindSlider.valueProperty().divide(100).multiply(sliderHeight)
         );
 
-        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            if(updateingFormHub) return;
-            int level = newVal.intValue();
-            updateLocalUI(level);
+        StackPane sliderContainer = new StackPane(trackBg, trackFill, blindSlider);
+        sliderContainer.setMaxHeight(sliderHeight);
+        sliderContainer.setPrefWidth(40);
 
+        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+            updateLocalUI(newVal.intValue());
+            if (!updateingFormHub && !blindSlider.isValueChanging()) {
+                // Nota: E mai sigur sa trimitem doar la release, dar aici merge si asa pentru feedback instant
+            }
         });
 
         blindSlider.setOnMouseReleased(event -> {
@@ -668,12 +691,8 @@ class BlindsWidget extends BaseWidget {
             hub.setBlindsLevel(level);
         });
 
-        blindSlider.setOnMouseClicked(event -> {
-            int level = (int) blindSlider.getValue();
-            hub.setBlindsLevel(level);
-        });
 
-        HBox content = new HBox(30, infoBox, blindSlider);
+        HBox content = new HBox(30, infoBox, sliderContainer);
         content.setAlignment(Pos.CENTER);
         content.setPadding(new Insets(10, 0, 0, 0));
 
@@ -682,6 +701,7 @@ class BlindsWidget extends BaseWidget {
         // Initial state
         updateLocalUI(hub.getBlindsLevel());
         blindSlider.setValue(hub.getBlindsLevel());
+
     }
 
     private void updateLocalUI(int level) {
@@ -696,6 +716,8 @@ class BlindsWidget extends BaseWidget {
         } else {
             statusLabel.setText("Open " + level + "%");
             statusLabel.setTextFill(Color.WHITE);
+            statusLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+            statusLabel.setPadding(new Insets(10,0,10,0));
 
             if (imgOpen != null) {
                 windowIcon.setImage(imgOpen);
@@ -716,10 +738,7 @@ class BlindsWidget extends BaseWidget {
             int level = (int) value;
 
             Platform.runLater(() -> {
-                updateingFormHub = true;
                 blindSlider.setValue(level);
-                updateLocalUI(level);
-                updateingFormHub = false;
             });
         }
     }
