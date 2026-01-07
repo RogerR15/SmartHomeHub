@@ -48,10 +48,11 @@ public class MainApp extends Application {
     private BorderPane dashboardRoot;
     private Scene mainScene;
 
-    //meteo label
+    // UI meteo (actualizate din retea)
     private Label tempLabel;
     private Label cityLabel;
 
+    // Variabile pentru drag & drop la fereastra
     private double xOffset = 0;
     private double yOffset = 0;
 
@@ -59,6 +60,7 @@ public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) {
+        // Ascundem bara standard de Windows pentru a o customiza
         stage.initStyle(javafx.stage.StageStyle.UNDECORATED);
 
         try {
@@ -76,12 +78,14 @@ public class MainApp extends Application {
 
         // CONFIGURARE FEREASTRA PRINCIPALA
         dashboardRoot = new BorderPane();
+        // Gradient fundal pentru aspect modern
         dashboardRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #111111, #000000);");
 
-        // HEADER
+        // HEADER => profil, greeting, ceas, meteo
         // Partea stanga
         VBox titleBox = new VBox(5);
 
+        // Label pentru mesaj de salut
         Label greet = new Label();
         greet.setTextFill(Color.WHITE);
         greet.setFont(Font.font("Segoe UI", FontWeight.BOLD, 32));
@@ -97,9 +101,9 @@ public class MainApp extends Application {
             greet.setText(timeGreeting + hub.getUserName() + "!");
 
         };
-        updateGreeting.run(); // Il setam prima data
+        updateGreeting.run(); // Set initial
 
-        //Fotografia utilizatorului
+        // Poza profil utilizator
         double radius = 40;
         double diameter = radius * 2;
         StackPane imageHolder = new StackPane();
@@ -111,10 +115,11 @@ public class MainApp extends Application {
         StackPane.setAlignment(headerProfileImg, Pos.TOP_CENTER);
         imageHolder.getChildren().add(headerProfileImg);
 
-        loadProfileImage(hub.getProfileImagePath());
+        loadProfileImage(hub.getProfileImagePath()); // Set default sau personalizata
 
-        imageHolder.setClip(new Circle(radius, radius, radius));
+        imageHolder.setClip(new Circle(radius, radius, radius)); // Crop circular
 
+        // Contur pozei cu efect de shadow
         Circle borderRing = new Circle(radius);
         borderRing.setFill(Color.TRANSPARENT);
         borderRing.setStroke(Color.web("#FFFFFF", 0.25));
@@ -123,7 +128,7 @@ public class MainApp extends Application {
 
         StackPane profilePicContainer = new StackPane(imageHolder, borderRing);
 
-        //grupare poza + text
+        //Grupare poza + text
         HBox profileArea = new HBox(15, profilePicContainer, titleBox);
         profileArea.setAlignment(Pos.CENTER_LEFT);
 
@@ -158,17 +163,17 @@ public class MainApp extends Application {
         DropShadow sunGlow = new DropShadow(15, Color.ORANGE);
         weatherIconView.setEffect(sunGlow);
 
-        //temperatura
+        // Temperatura
         tempLabel = new Label("--°");
         tempLabel.setTextFill(Color.WHITE);
         tempLabel.setFont(Font.font("Segoe UI", FontWeight.LIGHT, 26));
 
-        //oras
+        // Oras
         cityLabel = new Label(hub.getCity().toUpperCase());
         cityLabel.setTextFill(Color.web("#aaaaaa"));
         cityLabel.setFont(Font.font("Segoe UI", FontWeight.BOLD, 9));
 
-        //grupare
+        // Grupare
         VBox textContainer = new VBox(-1, tempLabel, cityLabel);
         textContainer.setAlignment(Pos.CENTER_LEFT);
 
@@ -180,19 +185,19 @@ public class MainApp extends Application {
 
         infoBox.setFillWidth(false);
 
-        //buton setari
+        // Buton setari
         Button settingsBtn = new Button();
         settingsBtn.setPrefSize(40, 40);
 
         try {
-            //icon setari
+            // Icon setari
             java.io.InputStream is = getClass().getResourceAsStream("/resources/settings.png");
             if (is != null) {
                 ImageView iv = new ImageView(new Image(is));
                 iv.setFitWidth(24);
                 iv.setFitHeight(24);
 
-                // un efect pentru a face iconita alba
+                // Efect pentru a face iconita alba
                 ColorAdjust whiteEffect = new ColorAdjust();
                 whiteEffect.setBrightness(1.0);
                 iv.setEffect(whiteEffect);
@@ -212,7 +217,7 @@ public class MainApp extends Application {
         // Action pentru butonul de setari
         settingsBtn.setOnAction(e -> switchToSettingsPage(hub));
 
-        //punem toate pe header
+        // Punem toate pe header
         HBox rightArea = new HBox(25, infoBox, settingsBtn);
         rightArea.setAlignment(Pos.CENTER_RIGHT);
 
@@ -235,7 +240,7 @@ public class MainApp extends Application {
 
         // WIDGETURI
 
-        // declaram Widget-urile
+        // Declaram Widget-urile
         var acWidget = new AirConditionerWidget(hub); // Cel inalt
         var lampWidget = new LampWidget(hub);
         var securityWidget = new SecurityWidget(hub);
@@ -244,7 +249,7 @@ public class MainApp extends Application {
         var music = new MusicWidget(hub);
         var logWidget = new LogWidget(hub);
 
-        // Conectam Observerii -- Fara asta nu merg butoanele
+        // Conectam Observerii -- Asigura functionalitatea butoanelor
         hub.attach(acWidget);
         hub.attach(lampWidget);
         hub.attach(securityWidget);
@@ -276,9 +281,12 @@ public class MainApp extends Application {
 
         // Notificari din backend pentru actualizari UI generale
         hub.attach((type, val) -> {
+            // Actualizare salut
             if ("USER".equals(type)) {
                 Platform.runLater(updateGreeting);
             }
+
+            // Actualizare meteo
             if ("CITY".equals(type)) {
                 Platform.runLater(() -> {
                     // Actualizam textul cand vine temperatura de pe net
@@ -289,10 +297,12 @@ public class MainApp extends Application {
                 });
             }
 
+            // Actualizare profil
             if ("PROFILE".equals(type)) {
                 Platform.runLater(() -> loadProfileImage((String) val));
             }
 
+            // Actulizare icon meteo
             if ("WEATHER_ICON".equals(type)) {
                 String condition = (String) val;
                 Platform.runLater(() -> updateWeatherIcon(weatherIconView, condition));
@@ -300,14 +310,14 @@ public class MainApp extends Application {
 
         });
 
-        // crearea bara titlu custom
+        // Crearea bara titlu custom
         HBox customTitleBar = createCustomTitleBar(stage);
         VBox rootContainer = new VBox(customTitleBar, dashboardRoot);
         VBox.setVgrow(dashboardRoot, Priority.ALWAYS);
         rootContainer.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.6), 20, 0, 0, 0);");
 
 
-        // AFISARE
+        // Afisare scena
         mainScene = new Scene(rootContainer, 1300, 850);
         mainScene.getStylesheets().add("data:text/css," +
                 ".list-cell{-fx-text-fill: #00ff00; -fx-font-family: 'Consolas';} " +
@@ -315,10 +325,13 @@ public class MainApp extends Application {
         stage.setTitle("Proiect PIP 2025");
         stage.setScene(mainScene);
         stage.show();
+
+        // Incarcam initial vremea
         hub.setCity(hub.getCity());
 
     }
 
+    // Metode helper (UI & Widgets)
     private void updateWeatherIcon(ImageView iconView, String condition) {
         String path; // Default
 
@@ -418,13 +431,15 @@ public class MainApp extends Application {
     }
 
     private void switchToSettingsPage(HomeHub hub) {
+
+        // ROOT-ul paginii
         VBox settingsRoot = new VBox();
         settingsRoot.setAlignment(Pos.CENTER);
         settingsRoot.setStyle("-fx-background-color: linear-gradient(to bottom, #111111, #000000);"); // Acelasi gradient ca dashboard
         VBox.setVgrow(settingsRoot, Priority.ALWAYS);
 
 
-        //titlu
+        // Titlu
         Label title = new Label("Settings");
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 40));
         title.setTextFill(Color.WHITE);
@@ -448,7 +463,7 @@ public class MainApp extends Application {
                         "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 20, 0, 0, 10);"
         );
 
-        //input pentru numele utilizatorului
+        // Input pentru numele utilizatorului
         Label name = new Label("User Name");
         name.setFont(Font.font(18));
         name.setTextFill(Color.GRAY);
@@ -458,7 +473,7 @@ public class MainApp extends Application {
         nameGroup.setAlignment(Pos.CENTER_LEFT);
         styleInput(userName);
 
-        //input oras
+        // Input oras
         Label cityLabel = new Label("City");
         cityLabel.setFont(Font.font(18));
         cityLabel.setTextFill(Color.GRAY);
@@ -469,7 +484,7 @@ public class MainApp extends Application {
         VBox cityGroup = new VBox(5, cityLabel, cityInput);
         cityGroup.setAlignment(Pos.CENTER_LEFT);
 
-        //poza profil
+        // Poza profil
         Label picLabel = new Label("Profile Picture");
         picLabel.setFont(Font.font(18));
         picLabel.setTextFill(Color.GRAY);
@@ -481,6 +496,7 @@ public class MainApp extends Application {
         settingPreviewImg.setPreserveRatio(true);
         settingPreviewImg.setSmooth(true);
 
+        // Functie smart pentru ajustarea dimensiunii imaginii
         Consumer<Image> updateImageSmart = (img) -> {
             settingPreviewImg.setImage(img);
             // Resetam dimensiunile vechi
@@ -493,6 +509,7 @@ public class MainApp extends Application {
             }
         };
 
+        // Incarcam imaginea curenta
         try {
             String currentPath = hub.getProfileImagePath();
             Image initialImg;
@@ -507,17 +524,18 @@ public class MainApp extends Application {
         previewContainer.setMinSize(previewSize, previewSize);
         StackPane.setAlignment(settingPreviewImg, Pos.CENTER);
 
-        previewContainer.setClip(new Circle(radius, radius, radius));
+        previewContainer.setClip(new Circle(radius, radius, radius)); // Crop circular
 
         previewContainer.setEffect(new DropShadow(10, Color.BLACK));
         StackPane borderContainer = new StackPane(previewContainer);
         borderContainer.setStyle("-fx-border-color: rgba(255,255,255,0.3); -fx-border-width: 2; -fx-border-radius: 50%;");
         borderContainer.setMaxSize(previewSize+4, previewSize+4);
 
+        // Buton pentru alegere imagine
         Button changePicBtn = new Button("Choose Image...");
         changePicBtn.setStyle("-fx-background-color: #333; -fx-text-fill: white; -fx-background-radius: 10; -fx-cursor: hand;");
 
-        final String[] tempNewPath = { null };
+        final String[] tempNewPath = { null }; // retinere cale noua temporar
 
         changePicBtn.setOnAction(e -> {
             FileChooser fileChooser = new FileChooser();
@@ -554,7 +572,7 @@ public class MainApp extends Application {
         saveBtn.setOnMouseExited(e -> saveBtn.setStyle("-fx-background-color: #34C759; -fx-text-fill: white; -fx-background-radius: 10; -fx-font-size: 16px; -fx-padding: 12; -fx-cursor: hand; -fx-font-weight: bold;"));
 
 
-        // buton back
+        // Buton back
         Button backBtn = new Button("Back");
         backBtn.setStyle("-fx-background-color: transparent; -fx-text-fill: #0A84FF; -fx-font-size: 16px; -fx-cursor: hand; -fx-padding: 0;");
 
@@ -572,8 +590,10 @@ public class MainApp extends Application {
             }
         });
 
+        // Asamblare card
         card.getChildren().addAll(picBox, nameGroup, cityGroup, new Region(), saveBtn, backBtn);
 
+        // Asamblare root Settings
         settingsRoot.getChildren().addAll(headerBox, card);
 
         if (mainScene.getRoot() instanceof VBox rootBox) {
@@ -617,6 +637,7 @@ public class MainApp extends Application {
                                 "-fx-border-radius: 10;"
                 );
             } else {
+                // Revenire la stil normal
                 tf.setStyle(
                         "-fx-background-color: rgba(255,255,255,0.05);" +
                                 "-fx-text-fill: white;" +
@@ -632,22 +653,28 @@ public class MainApp extends Application {
 
     private Button getButton(HomeHub hub, TextField userName, TextField cityInput, String[] tempNewPath) {
         Button saveBtn = new Button("Save Changes");
+
+        // Stilizare buton Save
         saveBtn.setStyle("-fx-background-color: #34C759; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-size: 16px; -fx-padding: 10 30; -fx-cursor: hand;");
 
         saveBtn.setOnAction(e -> {
+            // Salvam numele
             String newName = userName.getText();
             if (!newName.isEmpty()) {
                 hub.setUserName(newName); // Salvam in backend
             }
 
+            // Salvam orasul
             if(!cityInput.getText().isEmpty()) {
                 hub.setCity(cityInput.getText());
             }
 
+            // Salvam calea noii imagini
             if (tempNewPath[0] != null) {
                 hub.setProfileImagePath(tempNewPath[0]);
             }
 
+            // Actualizam UI: revenire dashboard
             if (mainScene.getRoot() instanceof VBox rootBox) {
                 if (rootBox.getChildren().size() > 1) {
                     rootBox.getChildren().set(1, dashboardRoot);
@@ -725,7 +752,7 @@ public class MainApp extends Application {
     private Button createPillSceneBtn(String text, String iconPath, String color, EventHandler<ActionEvent> action) {
         Button btn = new Button(text);
 
-        //icon
+        // Icon
         try {
             java.io.InputStream is = getClass().getResourceAsStream(iconPath);
             if (is != null) {
@@ -794,16 +821,14 @@ public class MainApp extends Application {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
+        // SVG paths pentru butoanele minimize/maximize/restore/close
         String minPath = "M0,7 L10,7 L10,8 L0,8 Z";
         String maxPath = "M0,0 L10,0 L10,10 L0,10 L0,0 Z M1,1 L9,1 L9,9 L1,9 Z";
         String restorePath = "M2,0 L10,0 L10,8 L8,8 L8,10 L0,10 L0,2 L2,2 L2,0 Z M2,2 L2,8 L8,8 L8,2 Z M4,1 L9,1 L9,6 L8,6 L8,4 L4,4 Z";
         String closePath = "M0,0 L10,10 M0,10 L10,0";
 
-        // Butoane
-        // Minimize
+        // Maximize/Restore logic
         Button minBtn = createIconBtn(minPath, false, e -> stage.setIconified(true));
-
-        // Maximize
         Button maxBtn = createIconBtn(maxPath, false, null); // Action il punem manual mai jos
 
         maxBtn.setOnAction(e -> {
