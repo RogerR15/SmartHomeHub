@@ -1,4 +1,4 @@
-package smarthome;
+package C2026_J18;
 
 import javafx.application.Platform;
 import javafx.geometry.Insets;

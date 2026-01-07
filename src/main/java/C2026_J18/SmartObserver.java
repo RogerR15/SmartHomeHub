@@ -1,4 +1,4 @@
-package smarthome;
+package C2026_J18;
 
 //Acesta este contractul care asigura decuplarea intre Hub și Dispozitive.
 

@@ -1,4 +1,4 @@
-module smarthome {
+module C2026_J18 {
     // Spunem JavaFX ce librarii folosim
     requires javafx.controls;
     requires javafx.fxml;
@@ -6,8 +6,8 @@ module smarthome {
     requires javafx.media;
 
     // Deschidem pachetul catre JavaFX ca sa poata incarca fereastra
-    opens smarthome to javafx.fxml;
+    opens C2026_J18 to javafx.fxml;
 
     // Exportam pachetul tau ca sa poata fi rulat
-    exports smarthome;
+    exports C2026_J18;
 }

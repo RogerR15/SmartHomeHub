@@ -6,7 +6,7 @@
  * si se realizeaza legatura dintre ei (hub.attach(widget)).
  */
 
-package smarthome;
+package C2026_J18;
 
 import javafx.animation.Animation;
 import javafx.animation.KeyFrame;

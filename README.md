@@ -59,7 +59,7 @@ Pentru a rula proiectul, asigurați-vă că aveți instalate:
 Acest proiect este configurat folosind **Maven**, care gestionează automat dependențele JavaFX.
 
 ### Metoda 1: Rulare prin Maven (RECOMANDAT)
-Aceasta este metoda standard și cea mai sigură. Proiectul este configurat să ruleze direct clasa principală `smarthome.MainApp`.
+Aceasta este metoda standard și cea mai sigură. Proiectul este configurat să ruleze direct clasa principală `C2026_J18.MainApp`.
 
 1.  În Eclipse/IntelliJ, dați click dreapta pe proiect.
 2.  Selectați **Run As -> Maven Build...**
@@ -69,7 +69,7 @@ Aceasta este metoda standard și cea mai sigură. Proiectul este configurat să 
 ### Metoda 2: Rulare Manuală din IDE (Click Dreapta -> Run)
 Dacă doriți să rulați aplicația **fără** a folosi comanda Maven (ex: pentru debugging rapid):
 
-1.  Navigați în folderul `src/main/java/smarthome/`.
+1.  Navigați în folderul `src/main/java/C2026_J18/`.
 2.  Rulați clasa **`Launcher.java`** (Click Dreapta -> Run As Java Application).
 
 > **Notă:** Pentru rularea manuală (Metoda 2), este necesar să folosiți `Launcher` și nu `MainApp` pentru a evita erorile legate de Java Modules (ex: *"Runtime components are missing"*).
@@ -106,7 +106,7 @@ SmartHomeHub/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── smarthome/
+│   │   │   └── C2026_J18/
 │   │   │       ├── Launcher.java      # Entry point (Fix pentru module)
 │   │   │       ├── MainApp.java       # Configurare GUI
 │   │   │       ├── HomeHub.java       # Subiectul (Backend Logic)

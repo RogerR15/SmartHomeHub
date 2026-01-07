@@ -1,4 +1,4 @@
-package smarthome;
+package C2026_J18;
 
 /*
  * Clasa HomeHub - Reprezinta starea centrala a sistemului.
