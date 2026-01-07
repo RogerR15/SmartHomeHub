@@ -21,19 +21,18 @@ Obiectivul principal al proiectului este demonstrarea practică a **Design Patte
 
 ---
 
-## 🏗️ Arhitectură și Design
-Aplicația respectă principiile **SOLID** 
-## 📐 Aplicarea Principiilor SOLID
+## 🏗️ Arhitectură și SOLID
 
-Proiectul respectă bunele practici de programare orientată pe obiecte:
+Aplicația respectă principiile **SOLID** și bunele practici de programare orientată pe obiecte:
 
+### 📐 Aplicarea Principiilor SOLID
 * **S - Single Responsibility:** `HomeHub` gestionează exclusiv logica de business și datele, în timp ce Widget-urile se ocupă doar de afișarea grafică.
 * **O - Open/Closed:** Sistemul permite adăugarea de noi tipuri de widget-uri (extensie) fără a modifica codul sursă al Hub-ului (închis modificării logicii de notificare).
 * **L - Liskov Substitution:** Orice clasă care extinde `BaseWidget` poate fi utilizată în interfață fără a afecta funcționarea aplicației.
 * **I - Interface Segregation:** Interfața `SmartObserver` conține o singură metodă esențială (`update`), fără a forța observatorii să implementeze funcționalități inutile.
 * **D - Dependency Inversion:** `HomeHub` (nivel înalt) nu depinde de clase concrete (ex: `LampWidget`), ci de abstracția `SmartObserver`.
 
-
+### 🧩 Componente Principale
 1.  **HomeHub (Model/Subject):** Nu conține cod UI. Notifică observatorii doar când starea se schimbă.
 2.  **Widgets (View/Observers):** Implementează interfața `SmartObserver`. Exemple:
     * *AirConditionerWidget* (Control complex cu slider circular).
@@ -57,27 +56,23 @@ Pentru a rula proiectul, asigurați-vă că aveți instalate:
 
 ## 🚀 Instrucțiuni de Rulare
 
-Acest proiect este configurat folosind **Maven**, ceea ce simplifică gestionarea dependențelor JavaFX.
+Acest proiect este configurat folosind **Maven**, care gestionează automat dependențele JavaFX.
 
-### Metoda 1: Rulare prin IntelliJ IDEA (Recomandat)
+### Metoda 1: Rulare prin Maven (RECOMANDAT)
+Aceasta este metoda standard și cea mai sigură. Proiectul este configurat să ruleze direct clasa principală `smarthome.MainApp`.
 
-1.  Deschideți IntelliJ IDEA.
-2.  Selectați **File -> Open** și alegeți folderul `SmartHomeHub` (cel care conține `pom.xml`).
-3.  Așteptați ca Maven să indexeze proiectul și să descarce dependențele.
-4.  În panoul din stânga, navigați la: `src/main/java/smarthome/`.
-5.  Dă click dreapta pe clasa `MainApp.java` și selectează **Run**.
+1.  În Eclipse/IntelliJ, dați click dreapta pe proiect.
+2.  Selectați **Run As -> Maven Build...**
+3.  La "Goals" introduceți: `clean javafx:run`
+4.  Apăsați **Run**.
 
-> **Important:** Dacă întâmpinați erori de tip *"Runtime components are missing"*, faceti obligatoriu o clasa **`Launcher`**, nu `MainApp`. Aceasta este o clasă ajutătoare care ocolește verificările stricte de module din Java modern.
+### Metoda 2: Rulare Manuală din IDE (Click Dreapta -> Run)
+Dacă doriți să rulați aplicația **fără** a folosi comanda Maven (ex: pentru debugging rapid):
 
-### Metoda 2: Rulare prin Maven (Linia de comandă / Terminal)
+1.  Navigați în folderul `src/main/java/smarthome/`.
+2.  Rulați clasa **`Launcher.java`** (Click Dreapta -> Run As Java Application).
 
-Aceasta este metoda universală care funcționează pe orice IDE (inclusiv Eclipse):
-
-1.  Deschideți terminalul în folderul proiectului.
-2.  Rulați comanda:
-    ```bash
-    mvn clean javafx:run
-    ```
+> **Notă:** Pentru rularea manuală (Metoda 2), este necesar să folosiți `Launcher` și nu `MainApp` pentru a evita erorile legate de Java Modules (ex: *"Runtime components are missing"*).
 
 ---
 
@@ -112,13 +107,14 @@ SmartHomeHub/
 │   ├── main/
 │   │   ├── java/
 │   │   │   └── smarthome/
-│   │   │       ├── MainApp.java       # Punctul de intrare (GUI)
-│   │   │       ├── SmartObserver.java # Interfața Observer
+│   │   │       ├── Launcher.java      # Entry point (Fix pentru module)
+│   │   │       ├── MainApp.java       # Configurare GUI
 │   │   │       ├── HomeHub.java       # Subiectul (Backend Logic)
+│   │   │       ├── SmartObserver.java # Interfața Observer
 │   │   │       └── Widgets.java       # Toate clasele Widget (Observers)
 │   │   │       
 │   │   └── resources/
-│   │       ├── resources/             # Imagini și iconițe si muzica
+│   │       ├── resources/             # Imagini, iconițe și fișiere audio
 │   │       └── style.css              # Stilizare CSS
 ├── pom.xml                            # Configurare Maven
 └── README.md                          # Documentație
