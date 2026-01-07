@@ -303,7 +303,7 @@ public class MainApp extends Application {
             }
 
             // Actulizare icon meteo
-            if ("WEATHER_ICON".equals(type)) {
+            if ("WEATHER".equals(type)) {
                 String condition = (String) val;
                 Platform.runLater(() -> updateWeatherIcon(weatherIconView, condition));
             }
