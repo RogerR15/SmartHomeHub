@@ -11,6 +11,7 @@ import javafx.scene.effect.DropShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.*;
@@ -27,13 +28,20 @@ import javafx.util.Duration;
 
 public class Widgets {
 }
-// Clasa de baza pentru stil ( card design )
+
+/**
+ * Clasa abstracta de baza pentru design.
+ * Ofera stilul vizual comun (card negru, umbre, colturi rotunjite)
+ * si animatiile de hover.
+ */
+
 abstract class BaseWidget extends VBox implements SmartObserver {
     protected HomeHub hub;
 
     public BaseWidget(HomeHub hub) {
         this.hub = hub;
 
+        // Constructor care seteaza stilul CSS si efectele
         this.setStyle(
                 "-fx-background-color: linear-gradient(to bottom right, #2b2b2b, #1f1f1f);" +
                         "-fx-background-radius: 25;" +
@@ -87,6 +95,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
         return header;
     }
 
+    //incarca iconita din resurse
     protected ImageView loadIcon(String path, int size) {
         ImageView iv = new ImageView();
         iv.setFitWidth(size);
@@ -101,6 +110,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
         return iv;
     }
 
+    // buton de ON/OFF stil iOS
     protected ToggleButton createIOSSwitch() {
         ToggleButton btn = new ToggleButton();
         btn.setPrefSize(40, 24);
@@ -126,6 +136,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
         return btn;
     }
 
+    // Stilizeaza un Slider pentru a semana cu cel de pe iOS/macOS
     protected void styleAppleSlider(Slider slider, String activeColor) {
         // CSS direct in cod pentru bara si buton
         slider.getStylesheets().add("data:text/css," +
@@ -143,9 +154,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
         );
 
         // Listener care coloreaza bara din stanga (efectul de fill)
-        slider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            updateSliderFill(slider, activeColor);
-        });
+        slider.valueProperty().addListener((obs, oldVal, newVal) -> updateSliderFill(slider, activeColor));
 
         // rulat putin mai tarziu ca sa gaseasca .track in scena
         Platform.runLater(() -> updateSliderFill(slider, activeColor));
@@ -180,7 +189,7 @@ abstract class BaseWidget extends VBox implements SmartObserver {
  */
 class CircularSlider extends StackPane {
 
-    // ===== CONFIG =====
+    // CONFIG
     private static final double SIZE = 180;
     private static final double RADIUS = 60;
     private static final double STROKE = 8;
@@ -189,13 +198,11 @@ class CircularSlider extends StackPane {
     private static final double START_ANGLE = 225;
     private static final double SWEEP_ANGLE = 270;
 
-    // ===== STATE =====
+    // STATE
     private final double min;
     private final double max;
     private double value;
 
-    // ===== UI =====
-    private final Circle track;
     private final Arc progress;
     private final Circle thumb;
     private final Label valueLabel;
@@ -212,7 +219,7 @@ class CircularSlider extends StackPane {
         setMinSize(SIZE, SIZE);
         setMaxSize(SIZE, SIZE);
 
-        // 1. PANE PENTRU DESENE (Acesta nu muta elementele singur)
+        // PANE PENTRU DESENE
         Pane drawingPane = new Pane();
         drawingPane.setPrefSize(SIZE, SIZE);
 
@@ -220,14 +227,15 @@ class CircularSlider extends StackPane {
         double cx = SIZE / 2;
         double cy = SIZE / 2;
 
-        // 2. TRACK (Cerc Gri) - Coordonate fixe
-        track = new Circle(cx, cy, RADIUS);
+        // TRACK (Cerc Gri) - Coordonate fixe
+        // UI
+        Circle track = new Circle(cx, cy, RADIUS);
         track.setFill(null);
         track.setStroke(Color.web("#2c2c2e"));
         track.setStrokeWidth(STROKE);
         track.setStrokeLineCap(StrokeLineCap.ROUND);
 
-        // 3. PROGRESS (Arc Albastru) - Coordonate fixe
+        // PROGRESS (Arc Albastru) - Coordonate fixe
         progress = new Arc();
         progress.setCenterX(cx);
         progress.setCenterY(cy);
@@ -274,14 +282,17 @@ class CircularSlider extends StackPane {
     private void updateFromMouse(double x, double y) {
         if (isDisabled()) return;
 
+        // Calculam centrul cercului
         double cx = SIZE / 2;
         double cy = SIZE / 2;
 
         double dx = x - cx;
-        double dy = cy - y; // Y inversat
+        double dy = cy - y; // Inversam Y pentru ca in ecrane Y creste in jos
 
         // Calcul unghi
+        // Math.atan2 returneaza unghiul in radiani pe baza coordonatelor
         double angle = Math.toDegrees(Math.atan2(dy, dx));
+        // (Conversie unghi in valoare temperatura)
         if (angle < 0) angle += 360;
 
         double relative = START_ANGLE - angle;
@@ -348,11 +359,13 @@ class CircularSlider extends StackPane {
 
 // 1. LAMPA
 class LampWidget extends BaseWidget {
+    // UI Elements
     private final ImageView icon;
     private Image imgOn, imgOff;
     private final Label statusText;
     private final ToggleButton powerBtn;
 
+    // Constructor
     public LampWidget(HomeHub hub) {
         super(hub);
 
@@ -391,6 +404,7 @@ class LampWidget extends BaseWidget {
     public void update(String type, Object value) {
         if("LIGHT".equals(type)) {
             boolean on = (boolean) value;
+            // actualizare UI pe thread-ul JavaFX
             Platform.runLater(() -> {
                 powerBtn.setSelected(on);
                 statusText.setText(on ? "ON" : "OFF");
@@ -409,6 +423,7 @@ class LampWidget extends BaseWidget {
 
 // 2. SECURITATE
 class SecurityWidget extends BaseWidget {
+    // UI Elements
     private final ImageView icon;
     private Image imgLocked, imgUnlocked;
     private final Label statusText;
@@ -473,25 +488,24 @@ class SecurityWidget extends BaseWidget {
             });
         }
     }
-
-
 }
-
 
 
 // 3. TERMOSTAT
 class ThermostatWidget extends BaseWidget {
-    private ImageView icon;
+    // UI Elements
+    private final ImageView icon;
     private Image imgCold, imgNormal, imgHot;
-    private Slider tempSlider;
-    private Label tempLabel;
-    private ToggleButton powerBtn;
+    private final Slider tempSlider;
+    private final Label tempLabel;
+    private final ToggleButton powerBtn;
 
     public ThermostatWidget(HomeHub hub) {
         super(hub);
 
+        // switch button
         powerBtn = createIOSSwitch();
-        powerBtn.setSelected(hub.isHeatingOn());
+        powerBtn.setSelected(hub.isHeatingOn()); // stare initiala
 
         // Actiune: Cand apesi butonul, pornesti/opresti caldura
         powerBtn.setOnAction(e -> {
@@ -571,6 +585,7 @@ class ThermostatWidget extends BaseWidget {
                     tempSlider.setValue(temp);
                 }
 
+                // actualizare text
                 tempLabel.setText(String.format("%.1f °C", temp));
 
                 // schimbare icon
@@ -605,10 +620,11 @@ class ThermostatWidget extends BaseWidget {
 // 4. JALUZELE
 class BlindsWidget extends BaseWidget {
 
-    private Slider blindSlider;
-    private Label statusLabel;
-    private ImageView windowIcon;
-    private boolean updateingFormHub = false;
+    // UI Elements
+    private final Slider blindSlider;
+    private final Label statusLabel;
+    private final ImageView windowIcon;
+    private final boolean updateingFormHub = false;
 
     private Image imgClosed;
     private Image imgOpen;
@@ -618,16 +634,16 @@ class BlindsWidget extends BaseWidget {
 
         try {
             // Incarcam fisierul style.css creat in resources
-            String cssPath = getClass().getResource("/style.css").toExternalForm();
+            String cssPath = Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm();
             this.getStylesheets().add(cssPath);
         } catch (Exception e) {
-            System.out.println("Atentie: Nu s-a gasit style.css. Creeaza-l in src/main/resources/");
+            System.out.println("Nu s-a gasit style.css.");
         }
 
         // Load images
         try {
-            imgClosed = new Image(getClass().getResourceAsStream("/resources/window_closed.png"));
-            imgOpen   = new Image(getClass().getResourceAsStream("/resources/window_open.png"));
+            imgClosed = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/window_closed.png")));
+            imgOpen   = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/window_open.png")));
         } catch (Exception e) {
             System.out.println("Nu s-au gasit imaginile de fereastra");
         }
@@ -641,7 +657,7 @@ class BlindsWidget extends BaseWidget {
         windowIcon.setFitHeight(70);
         windowIcon.setPreserveRatio(true);
         if (imgClosed != null) {
-            windowIcon.setImage(imgClosed);
+            windowIcon.setImage(imgClosed); // Stare initiala
         }
 
         // Status label
@@ -653,24 +669,30 @@ class BlindsWidget extends BaseWidget {
         infoBox.setAlignment(Pos.CENTER);
 
         // Slider
+        // Custom track
         double sliderHeight = 130;
         Rectangle trackBg = new Rectangle(12, sliderHeight);
         trackBg.setArcWidth(12);
         trackBg.setArcHeight(12);
         trackBg.setFill(Color.web("#333333"));
 
+        // Fill track
         Rectangle trackFill = new Rectangle(12, 0); // Porneste de la 0 inaltime
         trackFill.setArcWidth(12);
         trackFill.setArcHeight(12);
         trackFill.setFill(Color.web("#0A84FF"));
         StackPane.setAlignment(trackFill, Pos.BOTTOM_CENTER);
 
+        // Slider vertical
+        // Range 0-100
         blindSlider = new Slider(0, 100, 0);
         blindSlider.setOrientation(Orientation.VERTICAL);
         blindSlider.setPrefHeight(sliderHeight);
         blindSlider.setMaxHeight(sliderHeight);
         blindSlider.getStyleClass().add("slider-blinds");
 
+        // Fluent Binding API
+        //  Aceasta leaga matematic inaltimea dreptunghiului albastru de valoarea slider-ului.
         trackFill.heightProperty().bind(
                 blindSlider.valueProperty().divide(100).multiply(sliderHeight)
         );
@@ -679,13 +701,9 @@ class BlindsWidget extends BaseWidget {
         sliderContainer.setMaxHeight(sliderHeight);
         sliderContainer.setPrefWidth(40);
 
-        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
-            updateLocalUI(newVal.intValue());
-            if (!updateingFormHub && !blindSlider.isValueChanging()) {
-                // Nota: E mai sigur sa trimitem doar la release, dar aici merge si asa pentru feedback instant
-            }
-        });
+        blindSlider.valueProperty().addListener((obs, oldVal, newVal) -> updateLocalUI(newVal.intValue()));
 
+        // Trimite update la Hub cand eliberezi mouse-ul
         blindSlider.setOnMouseReleased(event -> {
             int level = (int) blindSlider.getValue();
             hub.setBlindsLevel(level);
@@ -698,12 +716,13 @@ class BlindsWidget extends BaseWidget {
 
         getChildren().add(content);
 
-        // Initial state
+        // stare initiala
         updateLocalUI(hub.getBlindsLevel());
         blindSlider.setValue(hub.getBlindsLevel());
 
     }
 
+    // Actualizeaza UI-ul local in functie de nivelul jaluzelelor
     private void updateLocalUI(int level) {
         if (level == 0) {
             statusLabel.setText("Closed");
@@ -723,6 +742,7 @@ class BlindsWidget extends BaseWidget {
                 windowIcon.setImage(imgOpen);
                 double glowIntensity = level / 100.0;
 
+                // Aplicam efect de glow albastru proportional cu nivelul
                 DropShadow glow = new DropShadow(
                         20 * glowIntensity,
                         Color.web("#0A84FF", 0.7)
@@ -737,9 +757,7 @@ class BlindsWidget extends BaseWidget {
         if ("BLINDS".equals(type)) {
             int level = (int) value;
 
-            Platform.runLater(() -> {
-                blindSlider.setValue(level);
-            });
+            Platform.runLater(() -> blindSlider.setValue(level));
         }
     }
 }
@@ -747,49 +765,52 @@ class BlindsWidget extends BaseWidget {
 // 5. MUZICA
 class MusicWidget extends BaseWidget {
     // UI Elements
-    private Label songTitle;
-    private Label artistLabel;
-    private Label lblCurrentTime;
-    private Label lblTotalTime;
-    private Button playBtn;
-    private ImageView playBtnIconView;
-    private ProgressBar progressBar;
-    private Slider volumeSlider;
+    private final Label songTitle;
+    private final Label artistLabel;
+    private final Label lblCurrentTime;
+    private final Label lblTotalTime;
+    private final ImageView playBtnIconView;
+    private final ProgressBar progressBar;
+    private final Slider volumeSlider;
 
-    private StackPane coverContainer;
+    // UI Element pentru coperta
+    private final StackPane coverContainer;
 
+    // Resurse
     private Image imgPlay, imgPause;
     private MediaPlayer mediaPlayer;
 
-    private List<Song> playlist = new ArrayList<>();
+    // Playlist
+    private final List<Song> playlist = new ArrayList<>();
     private int currentIndex = 0;
 
+    // Structura pentru melodia din playlist
     private record Song(String title, String artist, String colorHex, String fileName) {}
 
     public MusicWidget(HomeHub hub) {
         super(hub);
 
-        // INCARCARE CSS
+        // Incarcare stil CSS
         try {
             // Incarcam fisierul style.css creat in resources
-            String cssPath = getClass().getResource("/style.css").toExternalForm();
+            String cssPath = Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm();
             this.getStylesheets().add(cssPath);
         } catch (Exception e) {
-            System.out.println("Atentie: Nu s-a gasit style.css. Creeaza-l in src/main/resources/");
+            System.out.println("Nu s-a gasit style.css.");
         }
 
-        // 1. Resurse
+        // Resurse
         try {
-            imgPlay = new Image(getClass().getResourceAsStream("/resources/play.png"));
-            imgPause = new Image(getClass().getResourceAsStream("/resources/pause.png"));
+            imgPlay = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/play.png")));
+            imgPause = new Image(Objects.requireNonNull(getClass().getResourceAsStream("/resources/pause.png")));
         } catch (Exception e) { /* Ignoram */ }
 
-        // 2. Playlist
+        // Playlist
         playlist.add(new Song("Chill Vibes", "Pixabay", "#FF2D55", "song1.mp3"));
         playlist.add(new Song("Cyberpunk", "Synthwave", "#BF5AF2", "song2.mp3"));
         playlist.add(new Song("Piano Mood", "Classical", "#0A84FF", "song3.mp3"));
 
-        // 3. Header
+        // Header
         getChildren().add(createHeader("Spotify Player", new Label("")));
 
         // ZONA SUS: COPERTA + TEXT
@@ -797,18 +818,18 @@ class MusicWidget extends BaseWidget {
         coverContainer = new StackPane();
         coverContainer.setPrefSize(70, 70);
         coverContainer.setMaxSize(70, 70);
-        updateCoverStyle(playlist.get(0).colorHex, coverContainer);
+        updateCoverStyle(playlist.getFirst().colorHex, coverContainer);
 
         Label noteIcon = new Label("♫");
         noteIcon.setTextFill(Color.WHITE);
         noteIcon.setFont(Font.font("Segoe UI", FontWeight.BOLD, 25));
         coverContainer.getChildren().add(noteIcon);
 
-        songTitle = new Label(playlist.get(0).title);
+        songTitle = new Label(playlist.getFirst().title);
         songTitle.setTextFill(Color.WHITE);
         songTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
 
-        artistLabel = new Label(playlist.get(0).artist);
+        artistLabel = new Label(playlist.getFirst().artist);
         artistLabel.setTextFill(Color.web("#b3b3b3"));
         artistLabel.setFont(Font.font("Segoe UI", 11));
 
@@ -852,36 +873,38 @@ class MusicWidget extends BaseWidget {
         Button prevBtn = createIconMediaBtn("/resources/prev.png");
         Button nextBtn = createIconMediaBtn("/resources/next.png");
 
-        playBtn = new Button();
+        Button playBtn = new Button();
         playBtn.setPrefSize(32, 32);
         playBtn.setStyle("-fx-background-color: #1DB954; -fx-background-radius: 50; -fx-cursor: hand;");
 
+        // Iconita buton Play
         playBtnIconView = new ImageView();
         playBtnIconView.setFitWidth(14);
         playBtnIconView.setFitHeight(14);
         if (imgPlay != null) {
-            playBtnIconView.setImage(imgPlay);
-            playBtn.setGraphic(playBtnIconView);
+            playBtnIconView.setImage(imgPlay); // setam iconita initiala
+            playBtn.setGraphic(playBtnIconView); // setam iconita pe buton
         } else { playBtn.setText("?"); }
 
         volumeSlider = new Slider(0, 1, 0.5);
         volumeSlider.setPrefWidth(70);
-        volumeSlider.getStyleClass().add("spotify-slider");
+        volumeSlider.getStyleClass().add("spotify-slider"); // Stilizare custom din style.css
         HBox volBox = new HBox(2, volumeSlider);
         volBox.setAlignment(Pos.CENTER);
 
+        // Actiuni butoane
         playBtn.setOnAction(e -> {
-            boolean isPlaying = mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING;
+            boolean isPlaying = mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING; // Verificam starea actuala
             hub.setMusicPlaying(!isPlaying);
         });
-        prevBtn.setOnAction(e -> changeTrack(-1));
-        nextBtn.setOnAction(e -> changeTrack(1));
+        prevBtn.setOnAction(e -> changeTrack(-1)); // melodie anterioara
+        nextBtn.setOnAction(e -> changeTrack(1)); // melodie urmatoare
 
 
         HBox controlBar = new HBox(10, prevBtn, playBtn, nextBtn, volBox);
         controlBar.setAlignment(Pos.CENTER);
 
-        // STILIZARE CAPSULA
+        // capsula unde se alfa butoanele si volumul
         controlBar.setPadding(new Insets(8, 15, 8, 15)); // Spatiu interior
         controlBar.setStyle(
                 "-fx-background-color: rgba(40, 40, 40, 0.95);" +
@@ -896,34 +919,39 @@ class MusicWidget extends BaseWidget {
 
         getChildren().add(bottomArea);
 
+        // Incarcam prima melodie
         loadSong(0);
     }
 
+    // Incarca melodia de la indexul dat
     private void loadSong(int index) {
         if (mediaPlayer != null) {
-            mediaPlayer.volumeProperty().unbind();
+            mediaPlayer.volumeProperty().unbind(); // dezlegam legatura volumului
 
-            mediaPlayer.stop();
-            mediaPlayer.dispose();
+            mediaPlayer.stop(); // oprim melodia curenta
+            mediaPlayer.dispose(); // eliberam resursele
         }
 
+        // Incarcam melodia noua
         Song song = playlist.get(index);
         try {
-            String path = getClass().getResource("/resources/" + song.fileName).toExternalForm();
-            javafx.scene.media.Media media = new javafx.scene.media.Media(path);
-            mediaPlayer = new javafx.scene.media.MediaPlayer(media);
+            // Folosim getResource pentru a gasi fisierul in resources
+            String path = Objects.requireNonNull(getClass().getResource("/resources/" + song.fileName)).toExternalForm();
+            Media media = new Media(path); // Creem obiectul Media
+            mediaPlayer = new MediaPlayer(media); // Creem MediaPlayer-ul
 
+            // Legam volumul mediaPlayer-ului de slider
             mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
-            mediaPlayer.setOnEndOfMedia(() -> changeTrack(1));
+            mediaPlayer.setOnEndOfMedia(() -> changeTrack(1)); // trece la melodia urmatoare
 
-            mediaPlayer.setOnReady(() -> {
-                lblTotalTime.setText(formatTime(media.getDuration()));
-            });
+            // Actualizam durata totala cand melodia e gata
+            mediaPlayer.setOnReady(() -> lblTotalTime.setText(formatTime(media.getDuration())));
 
+            // Actualizam progresul melodia in timp real
             mediaPlayer.currentTimeProperty().addListener((obs, oldTime, newTime) -> {
-                if (mediaPlayer.getTotalDuration() != null && !mediaPlayer.getTotalDuration().isUnknown()) {
-                    progressBar.setProgress(newTime.toMillis() / mediaPlayer.getTotalDuration().toMillis());
-                    lblCurrentTime.setText(formatTime(newTime));
+                if (mediaPlayer.getTotalDuration() != null && !mediaPlayer.getTotalDuration().isUnknown()) { // daca durata e cunoscuta si valida
+                    progressBar.setProgress(newTime.toMillis() / mediaPlayer.getTotalDuration().toMillis()); // actualizam progress bar
+                    lblCurrentTime.setText(formatTime(newTime)); // actualizam timpul curent
                 }
             });
 
@@ -932,38 +960,42 @@ class MusicWidget extends BaseWidget {
         }
     }
 
+    // Formateaza durata in format mm:ss
     private String formatTime(javafx.util.Duration duration) {
         int minutes = (int) duration.toMinutes();
         int seconds = (int) duration.toSeconds() % 60;
         return String.format("%d:%02d", minutes, seconds);
     }
 
+    // Schimba melodia curenta in functie de directie (-1 = inapoi, 1 = inainte)
     private void changeTrack(int direction) {
         currentIndex = (currentIndex + direction + playlist.size()) % playlist.size();
-        Song nextSong = playlist.get(currentIndex);
+        Song nextSong = playlist.get(currentIndex); // Preluam melodia urmatoare
 
-        songTitle.setText(nextSong.title);
-        artistLabel.setText(nextSong.artist);
+        songTitle.setText(nextSong.title); // Actualizam titlul
+        artistLabel.setText(nextSong.artist); // Actualizam artistul
 
-        // FIX: Acum folosim variabila directa, nu mai facem casting dubios
+        // Actualizam culoarea copertii
         updateCoverStyle(nextSong.colorHex, coverContainer);
 
-        boolean wasPlaying = (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING);
-        loadSong(currentIndex);
+        boolean wasPlaying = (mediaPlayer != null && mediaPlayer.getStatus() == MediaPlayer.Status.PLAYING); // Verificam daca melodia curenta era in redare
+        loadSong(currentIndex); // Incarcam melodia noua
 
-        if (wasPlaying) mediaPlayer.play();
-        else progressBar.setProgress(0);
+        if (wasPlaying) mediaPlayer.play(); // Daca melodia curenta era in redare, pornim si pe cea noua
+        else progressBar.setProgress(0); // Daca nu era in redare, resetam bara de progres
     }
 
+    // Actualizeaza stilul copertii cu noua culoare
     private void updateCoverStyle(String color, StackPane cover) {
         cover.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 10;");
     }
 
+    // Creeaza un buton cu o iconita data
     private Button createIconMediaBtn(String iconPath) {
         Button b = new Button();
         b.setStyle("-fx-background-color: transparent; -fx-cursor: hand;");
         try {
-            ImageView iv = new ImageView(new Image(getClass().getResourceAsStream(iconPath)));
+            ImageView iv = new ImageView(new Image(Objects.requireNonNull(getClass().getResourceAsStream(iconPath))));
             iv.setFitWidth(20); iv.setFitHeight(20);
             b.setGraphic(iv);
         } catch(Exception e) { b.setText("?"); b.setTextFill(Color.WHITE); }
@@ -974,14 +1006,15 @@ class MusicWidget extends BaseWidget {
     public void update(String type, Object value) {
         if ("MUSIC".equals(type)) {
             boolean shouldPlay = (boolean) value;
+            // Actualizare UI pe thread-ul JavaFX
             Platform.runLater(() -> {
                 if (mediaPlayer == null) return;
-                if (shouldPlay) {
+                if (shouldPlay) { // Porneste redarea
                     mediaPlayer.play();
-                    if (imgPause != null) playBtnIconView.setImage(imgPause);
+                    if (imgPause != null) playBtnIconView.setImage(imgPause); // schimba iconita in pauza
                 } else {
                     mediaPlayer.pause();
-                    if (imgPlay != null) playBtnIconView.setImage(imgPlay);
+                    if (imgPlay != null) playBtnIconView.setImage(imgPlay); // schimba iconita in play
                 }
             });
         }
@@ -991,13 +1024,17 @@ class MusicWidget extends BaseWidget {
 
 // 6. AER CONDITIONAT
 class AirConditionerWidget extends BaseWidget {
-    private ToggleButton powerBtn;
-    private Label statusLabel;
-    private CircularSlider tempKnob;
-    private ImageView icon;
+    // UI Elements
+    private final ToggleButton powerBtn;
+    private final Label statusLabel;
+    private final CircularSlider tempKnob;
+    private final ImageView icon;
 
-    private Button btnLow, btnMed, btnHigh;
-    private HBox fanContainer;
+    // Fan speed buttons
+    private final Button btnLow;
+    private final Button btnMed;
+    private final Button btnHigh;
+    private final HBox fanContainer;
 
     public AirConditionerWidget(HomeHub hub) {
         super(hub);
@@ -1008,7 +1045,7 @@ class AirConditionerWidget extends BaseWidget {
 
         //header
         powerBtn = createIOSSwitch();
-        powerBtn.setOnAction(e -> hub.setAcPower(powerBtn.isSelected()));
+        powerBtn.setOnAction(e -> hub.setAcPower(powerBtn.isSelected())); // Trimite starea la Hub
         getChildren().add(createHeader("Air Conditioner", powerBtn));
 
         //icon
@@ -1016,7 +1053,7 @@ class AirConditionerWidget extends BaseWidget {
         icon.setOpacity(0.3);
 
 
-        if (icon.getImage() == null) {}
+//        if (icon.getImage() == null) {}
         VBox iconContainer = new VBox(icon);
         iconContainer.setAlignment(Pos.CENTER);
         iconContainer.setPadding(new Insets(5, 0, 5, 0)); // Spatiu sus/jos
@@ -1026,10 +1063,9 @@ class AirConditionerWidget extends BaseWidget {
         tempKnob = new CircularSlider(16, 30, 22);
 
         // Cand invartim de el, anuntam Hub-ul
-        tempKnob.setOnValueChanged(val -> {
-            hub.setAcTemperature(val);
-        });
+        tempKnob.setOnValueChanged(hub::setAcTemperature);
 
+        // Initial dezactivat
         tempKnob.setDisable(true);
         tempKnob.setActive(false);
 
@@ -1114,13 +1150,13 @@ class AirConditionerWidget extends BaseWidget {
                     statusLabel.setText("COOLING to " + hub.getAcTemperature() + "°");
                     statusLabel.setTextFill(Color.web("#0A84FF"));
 
-                    icon.setOpacity(1.0);
+                    icon.setOpacity(1.0); // full opacity cand e activ
                     icon.setEffect(new DropShadow(10, Color.web("#0A84FF")));
                 } else {
                     statusLabel.setText("OFF");
                     statusLabel.setTextFill(Color.GRAY);
 
-                    icon.setOpacity(0.3);
+                    icon.setOpacity(0.3); // semi-transparent cand e oprit
                     icon.setEffect(null);
                 }
             });
@@ -1144,7 +1180,7 @@ class AirConditionerWidget extends BaseWidget {
 
 // LOGURI
 class LogWidget extends BaseWidget {
-    private final ListView<String> list;
+    private final ListView<String> list; // Lista pentru loguri
 
     public LogWidget(HomeHub hub) {
         super(hub);
@@ -1160,6 +1196,6 @@ class LogWidget extends BaseWidget {
     @Override
     public void update(String type, Object val) {
         String msg = "> " + type + ": " + val;
-        Platform.runLater(() -> list.getItems().addFirst(msg));
+        Platform.runLater(() -> list.getItems().addFirst(msg)); // Adaugam log-ul in lista
     }
 }

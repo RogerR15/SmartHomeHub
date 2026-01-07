@@ -1,6 +1,6 @@
 package smarthome;
 
-/**
+/*
  * Clasa HomeHub - Reprezinta starea centrala a sistemului.
  * * Rol in Design Pattern: SUBJECT (SUBIECT)
  * Aceasta clasa detine datele (temperatura, lumini, etc.) si o lista de observatori.
@@ -19,44 +19,31 @@ import java.util.List;
 
 public class HomeHub {
 
+    // Configurare API Vreme
     private static final String API_KEY = "4ee001a6550871897d4d45bc287c4491";
     private static final String API_URL_TEMPLATE = "https://api.openweathermap.org/data/2.5/weather?q=%s&appid=%s&units=metric";
 
+    // Starea initiala a sistemului
     private String userName = "Yasmina"; // Default
-
     private String profileImagePath = "/resources/yasmina.png";
-
-    //lista privata de observatori
-    private List<SmartObserver> observers = new ArrayList<>();
-
-
-
-    //starea interna a casei
     private double temperature = 21.0;
     private boolean heatingOn = true;
-    private boolean lightsOn = false;
-    private boolean isLocked = true;
     private int blindsLevel = 0;
-    private boolean musicPlaying = false;
-    private boolean acPower = false;
     private double acTemp = 22.0;
     private int fanSpeed = 1;
-
     private String city = "Iasi"; // Orasul default
     private double outsideTemp = 0.0;
+
+    // Lista de abonati (Widget-uri)
+    private final List<SmartObserver> observers = new ArrayList<>();
 
     // IMPLEMENTARE OBSERVER PATTERN
     public void attach(SmartObserver o) {
         observers.add(o);
     }
 
-
-
-    /**
-     * Parcurge lista de observatori si apeleaza metoda update() a fiecaruia.
-     * @param type Tipul evenimentului (ex: "TEMP", "LIGHT") pentru filtrare eficienta.
-     * @param value Noua valoare a starii.
-     */
+    // Aceasta metoda este cheia. Cand ceva se schimba, strigam la toti abonatii:
+    // "Hei, s-a schimbat variabila de tip X cu valoarea Y!"
     private void notifyObservers(String type, Object value) {
         for (SmartObserver o : observers) {
             o.update(type, value);
@@ -64,14 +51,10 @@ public class HomeHub {
     }
 
     // GETTERS
-    public double getTemperature() {
-        return temperature;
-    }
-    public String getUserName() { return userName; }
-    public double getAcTemperature() {
-        return acTemp;
-    }
+    public double getTemperature() {return temperature;}
     public int getFanSpeed() { return fanSpeed; }
+    public String getUserName() { return userName; }
+    public double getAcTemperature() { return acTemp; }
     public String getCity() { return city; }
     public double getOutsideTemp() { return outsideTemp; }
     public boolean isHeatingOn() {
@@ -85,19 +68,18 @@ public class HomeHub {
 
 
 
-    // SETTERS - declanseaza notificarile
+    // SETTERS
+    // Fiecare setter modifica starea SI notifica observatorii
     public void setUserName(String name) {
         this.userName = name;
         notifyObservers("USER", name);
     }
 
     public void toggleLights(boolean status) {
-        this.lightsOn = status;
         notifyObservers("LIGHT", status);
     }
 
     public void setDoorLocked(boolean locked) {
-        this.isLocked = locked;
         notifyObservers("LOCKED", locked);
     }
 
@@ -113,7 +95,6 @@ public class HomeHub {
     }
 
     public void setAcPower(boolean on) {
-        this.acPower = on;
         notifyObservers("AC_POWER", on);
     }
 
@@ -133,13 +114,14 @@ public class HomeHub {
     }
 
     public void setMusicPlaying(boolean playing) {
-        this.musicPlaying = playing;
         notifyObservers("MUSIC", playing);
     }
 
     public void setCity(String newCity) {
         this.city = newCity;
         // Cand utilizatorul schimba orasul, apelam API-ul din nou
+        // Cand schimbam orasul, pornim un fir de executie separat pentru a lua vremea de pe net
+        // Nu facem asta pe UI thread pentru a nu bloca interfata!
         System.out.println("LOG: Oras schimbat in " + newCity + ". Caut vremea...");
         fetchRealWeather(newCity);
     }
@@ -155,11 +137,14 @@ public class HomeHub {
      * Realizeaza un apel HTTP asincron (pe un alt thread) catre OpenWeatherMap API.
      * Este crucial sa rulam pe un thread separat pentru a nu ingheta interfata grafica (JavaFX Application Thread).
      */
+
+    //Logica pentru apelul API
     private void fetchRealWeather(String cityName) {
         //rulam intr-un thread separat pentru a nu bloca interfata
         System.out.println("DEBUG: Pregatesc firul de executie pentru " + cityName);
         new Thread(() -> {
            try{
+               // (Logica HTTP Request catre OpenWeatherMap)
 
                //construim URL-ul pentru API
                String cleanCity = cityName.trim().replace(" ", "%20");
@@ -200,11 +185,13 @@ public class HomeHub {
                     //conditia
                     String condition = parseWeatherCondition(json);
 
+                    // Daca totul e ok, extragem temperatura si o trimitem in sistem
                     //actualizam starea interna si notificam observatorii
                     this.outsideTemp = temp;
-                    notifyObservers("CITY", cityName);
 
-                   notifyObservers("WEATHER_ICON", condition);
+                   // Notificam UI-ul ca s-a schimbat orasul si vremea
+                    notifyObservers("CITY", cityName);
+                    notifyObservers("WEATHER", condition);
 
                     System.out.println("LOG: Temperatura extrasa cu succes: " + temp);
                     System.out.println("Vremea actualizata pentru " + cityName + ": " + temp);
@@ -216,7 +203,7 @@ public class HomeHub {
                System.out.println("Error fetching weather data: " + e.getMessage());
 //               e.printStackTrace();
            }
-        }).start();
+        }).start(); // Pornim thread-ul
     }
 
     // Helper mic pentru a extrage "temp":XX.X din textul JSON fara librarii externe
@@ -251,7 +238,7 @@ public class HomeHub {
                         }
                     }
 
-                    String numStr = after.substring(startIndex, endIndex);
+                    String numStr = after.substring(startIndex, endIndex); // Extragem substring-ul cu numarul
                     return Double.parseDouble(numStr);
                 }
             }
@@ -261,13 +248,12 @@ public class HomeHub {
         return 0.0; // Fallback
     }
 
-
+    // Helper mic pentru a extrage conditia meteo (ex: "Clear", "Clouds") din JSON
     private String parseWeatherCondition(String json) {
         try {
             // JSON-ul arata cam asa: "weather":[{"id":800,"main":"Clear", ...
             // Cautam prima aparitie a lui "main":"
-            // ATENTIE: Exista un "main" si la temperatura. Cel de vreme e primul in lista de obicei,
-            // dar ca sa fim siguri, cautam intai "weather"
+            // cautam intai "weather"
 
             int weatherIndex = json.indexOf("\"weather\"");
             if (weatherIndex != -1) {
@@ -290,5 +276,4 @@ public class HomeHub {
         }
         return "Clear"; // Default daca nu gasim
     }
-
 }
